@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://min-api.cryptocompare.com https://*.cryptocompare.com; img-src 'self' data:;">
+    <title>Криптообменник</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a, #0a2e0a);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #e0e0e0;
+            position: relative;
+            overflow: hidden;
+        }
+        .container {
+            background: rgba(30, 30, 30, 0.9);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 100%;
+            transition: transform 0.3s ease;
+            position: relative;
+            z-index: 1;
+            margin: 0 auto;
+        }
+        .container:hover {
+            transform: scale(1.02);
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        h1 span.oo {
+            background: linear-gradient(90deg, #9c27b0, #673ab7);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 8px rgba(156, 39, 176, 0.5);
+        }
+        .test-logo {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-family: 'Arial Black', sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+            color: transparent;
+            background: linear-gradient(135deg, #cccccc, #999999, #cccccc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            text-shadow: 
+                0 0 5px rgba(255, 255, 255, 0.3),
+                0 0 10px rgba(255, 255, 255, 0.2);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transform: rotate(15deg);
+            z-index: 2;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0d6b4;
+            font-size: 14px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 25px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #e0e0e0;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: box-shadow 0.3s ease;
+        }
+        input:focus {
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 204, 102, 0.5);
+        }
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #00cc66, #006633);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+            margin-bottom: 10px;
+        }
+        button[type="button"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #9c27b0, #673ab7);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+        }
+        button[type="order"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(90deg, #4caf50, #2e7d32);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            margin-top: 10px;
+        }
+        button[type="button"]:hover, button[type="order"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .rate {
+            text-align: center;
+            margin: 15px 0;
+            color: #a0d6b4;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .result {
+            text-align: center;
+            margin-top: 10px;
+            color: #00cc66;
+            font-weight: bold;
+        }
+        .message {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            display: none;
+        }
+        .success {
+            color: #00cc66;
+        }
+        .error {
+            color: #ff4d4d;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: rgba(30, 30, 30, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            animation: slideIn 0.5s ease;
+        }
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal-content h2 {
+            color: #00cc66;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .modal-content p {
+            color: #a0d6b4;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+        .modal-content .timer {
+            color: #ff4d4d;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .modal-content button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: linear-gradient(90deg, #9c27b0, #673ab7);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .modal-content button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(156, 39, 176, 0.4);
+        }
+        @media (max-width: 400px) {
+            .container {
+                margin: 10px;
+                padding: 20px;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            input, button {
+                padding: 10px;
+            }
+            .modal-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="test-logo">TEST</div>
+        <h1>Крипт<span class="oo">оо</span>бменник</h1>
+        <form id="orderForm" method="POST" action="http://127.0.0.1:5000">
+            <div class="form-group">
+                <label>Сумма USDT:</label>
+                <input type="number" id="amount" name="amount" step="0.01" required placeholder="Введите сумму">
+            </div>
+            <div class="form-group">
+                <label>Кошелек для RUB:</label>
+                <input type="text" id="wallet" name="wallet" required placeholder="Введите кошелек">
+            </div>
+            <div class="rate" id="rate">Курс: $ <span id="rateValue">Загрузка...</span> RUB</div>
+            <div class="result" id="result"></div>
+            <button type="submit">Отправить заявку</button>
+            <button type="button" onclick="updateRate()">Обновить курс</button>
+            <button type="order" id="getOrderBtn" style="display: none;">Получить ордер</button>
+        </form>
+        <div class="message" id="messageBox"></div>
+    </div>
+
+    <div class="modal" id="orderModal">
+        <div class="modal-content">
+            <h2>Ордер создан</h2>
+            <p>Сумма USDT: <span id="orderAmount"></span></p>
+            <p>Кошелек для RUB: <span id="orderWallet"></span></p>
+            <p>Переведите рубли по следующим реквизитам:</p>
+            <p><strong>Карта: 1234 5678 9012 3456</strong></p>
+            <p>Имя: Иван Иванов</p>
+            <p>Банк: Сбербанк</p>
+            <div class="timer" id="timer">30:00</div>
+            <button onclick="closeModal()">Закрыть</button>
+        </div>
+    </div>
+
+    <script>
+        let currentRate = null;
+        let orderData = null;
+
+        async function updateRate() {
+            const rateElement = document.getElementById('rateValue');
+            const resultElement = document.getElementById('result');
+            const updateButton = document.querySelector('button[type="button"]');
+            
+            rateElement.textContent = 'Загрузка...';
+            resultElement.textContent = '';
+            updateButton.disabled = true;
+            updateButton.innerHTML = 'Обновление...';
+            updateButton.style.opacity = '0.7';
+
+            try {
+                const response = await fetch('https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB');
+                const data = await response.json();
+                if (data.RUB) {
+                    currentRate = data.RUB;
+                    rateElement.textContent = currentRate.toFixed(2);
+                    updateButton.innerHTML = 'Курс обновлен!';
+                    setTimeout(() => {
+                        updateButton.innerHTML = 'Обновить курс';
+                    }, 2000);
+                } else {
+                    throw new Error('Нет данных о курсе');
+                }
+            } catch (error) {
+                rateElement.textContent = 'Ошибка';
+                console.error('Ошибка API:', error);
+                currentRate = 90; // Запасной курс
+                rateElement.textContent = currentRate.toFixed(2);
+                updateButton.innerHTML = 'Ошибка, попробуйте позже';
+                setTimeout(() => {
+                    updateButton.innerHTML = 'Обновить курс';
+                }, 2000);
+            } finally {
+                updateButton.disabled = false;
+                updateButton.style.opacity = '1';
+            }
+
+            updateResult();
+        }
+
+        function updateResult() {
+            const amount = document.getElementById('amount').value;
+            const resultElement = document.getElementById('result');
+            if (amount && currentRate) {
+                const total = amount * currentRate;
+                resultElement.textContent = `Вы получите: ${total.toFixed(2)} RUB`;
+            } else {
+                resultElement.textContent = '';
+            }
+        }
+
+        // Таймер обратного отсчёта
+        function startTimer() {
+            let timeLeft = 30 * 60; // 30 минут в секундах
+            const timerElement = document.getElementById('timer');
+
+            const timerInterval = setInterval(() => {
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = timeLeft % 60;
+                timerElement.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerElement.textContent = 'Время истекло';
+                    timerElement.style.color = '#ff4d4d';
+                }
+                timeLeft--;
+            }, 1000);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('orderModal');
+            modal.style.display = 'none';
+        }
+
+        function showOrder() {
+            if (orderData && !orderData.error) {
+                document.getElementById('orderAmount').textContent = orderData.order_amount;
+                document.getElementById('orderWallet').textContent = orderData.order_wallet;
+                document.getElementById('orderModal').style.display = 'flex';
+                startTimer();
+            } else {
+                alert('Ордер не создан. Проверьте данные.');
+            }
+        }
+
+        // Обработка формы
+        document.getElementById('orderForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            try {
+                const response = await fetch('http://127.0.0.1:5000', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                const messageBox = document.getElementById('messageBox');
+                messageBox.style.display = data.error ? 'block' : 'none';
+                messageBox.className = 'message ' + (data.error ? 'error' : 'success');
+                messageBox.textContent = data.message;
+
+                if (!data.error) {
+                    orderData = data;
+                    document.getElementById('getOrderBtn').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                document.getElementById('messageBox').className = 'message error';
+                document.getElementById('messageBox').textContent = 'Ошибка сети';
+            }
+        });
+
+        // Обработка кнопки "Получить ордер"
+        document.getElementById('getOrderBtn').addEventListener('click', showOrder);
+
+        // Обновление курса при загрузке страницы
+        updateRate();
+
+        // Обновление результата при изменении суммы
+        document.getElementById('amount').addEventListener('input', updateResult);
+    </script>
+</body>
+</html>
