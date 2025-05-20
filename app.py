@@ -22,6 +22,7 @@ AUTHORIZED_USERS = {}
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     chat_id = user.id
+
     AUTHORIZED_USERS[chat_id] = {
         "username": user.username,
         "first_name": user.first_name,
@@ -34,13 +35,17 @@ async def get_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         response = requests.get('https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB ')
         data = response.json()
-        rate = data.get('RUB', 'Ошибка')
-        await update.message.reply_text(f"Текущий курс USDT/RUB: {rate:.2f}")
+        if data.get('RUB'):
+            rate = data['RUB']
+            await update.message.reply_text(f"Текущий курс USDT/RUB: {rate:.2f}")
+        else:
+            await update.message.reply_text("Ошибка получения курса.")
     except Exception as e:
-        await update.message.reply_text("Ошибка получения курса.")
+        logger.error(f"Ошибка API: {str(e)}")
+        await update.message.reply_text("Ошибка сети.")
 
 async def check_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Функция проверки заявок пока не реализована.")
+    await update.message.reply_text("Функция проверки заявок пока не реализована. Скоро будет доступна!")
 
 # Настройка приложения Telegram
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -60,9 +65,9 @@ def index():
             if not all([amount, wallet]):
                 return jsonify({'message': 'Заполните все поля!', 'error': True})
 
-            # Формирование сообщения админу
+            # Формирование сообщения
             message = (
-                f"🔔 Новая заявка\n"
+                f"Новая заявка\n"
                 f"Сумма USDT: {amount}\n"
                 f"Кошелек для RUB: {wallet}"
             )
@@ -71,7 +76,7 @@ def index():
             # Отправляем вам (админу)
             asyncio.run(bot.send_message(chat_id=ADMIN_CHAT_ID, text=message))
 
-            # Отправляем пользователю, если он есть в списке
+            # Если chat_id указан и есть в списке — отправляем пользователю
             if user_chat_id and int(user_chat_id) in AUTHORIZED_USERS:
                 asyncio.run(bot.send_message(
                     chat_id=int(user_chat_id),
