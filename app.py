@@ -11,35 +11,36 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 app = Flask(__name__)
-TELEGRAM_TOKEN = "8098295902:AAE8YxldfN-stCXWoA5HW9UUoKunkw2cj88"  # Убедитесь, что токен верный
-ADMIN_CHAT_ID = "789334648"  # Убедитесь, что ID верный
+TELEGRAM_TOKEN = "8098295902:AAE8YxldfN-stCXWoA5HW9UUoKunkw2cj88"
+ADMIN_CHAT_ID = "789334648"
 bot = Bot(token=TELEGRAM_TOKEN)
 
-# URL вашего сайта
-WEBHOOK_URL = "https://crypto-exchange-5.onrender.com/telegram-webhook "
+# Хранение chat_id пользователей
+AUTHORIZED_USERS = {}
 
 # Функции для обработки команд
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"Получена команда /start от {update.message.chat_id}")
-    await update.message.reply_text("Добро пожаловать! Используйте /get_rate для курса или /check_orders для проверки заявок.")
+    user = update.effective_user
+    chat_id = user.id
+    AUTHORIZED_USERS[chat_id] = {
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name
+    }
+    logger.info(f"Пользователь {user} начал взаимодействие.")
+    await update.message.reply_text("Добро пожаловать! Вы будете получать уведомления о ваших заявках.")
 
 async def get_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"Получена команда /get_rate от {update.message.chat_id}")
     try:
         response = requests.get('https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB ')
         data = response.json()
-        if data.get('RUB'):
-            rate = data['RUB']
-            await update.message.reply_text(f"Текущий курс USDT/RUB: {rate:.2f}")
-        else:
-            await update.message.reply_text("Ошибка получения курса.")
+        rate = data.get('RUB', 'Ошибка')
+        await update.message.reply_text(f"Текущий курс USDT/RUB: {rate:.2f}")
     except Exception as e:
-        logger.error(f"Ошибка API: {str(e)}")
-        await update.message.reply_text("Ошибка сети.")
+        await update.message.reply_text("Ошибка получения курса.")
 
 async def check_orders(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    logger.info(f"Получена команда /check_orders от {update.message.chat_id}")
-    await update.message.reply_text("Функция проверки заявок пока не реализована. Скоро будет доступна!")
+    await update.message.reply_text("Функция проверки заявок пока не реализована.")
 
 # Настройка приложения Telegram
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -54,20 +55,28 @@ def index():
             logger.info("Получен POST-запрос на обработку заявки.")
             amount = request.form.get('amount')
             wallet = request.form.get('wallet')
+            user_chat_id = request.form.get('user_chat_id')
 
             if not all([amount, wallet]):
                 return jsonify({'message': 'Заполните все поля!', 'error': True})
 
-            # Формирование сообщения
+            # Формирование сообщения админу
             message = (
-                f"Новая заявка\n"
+                f"🔔 Новая заявка\n"
                 f"Сумма USDT: {amount}\n"
                 f"Кошелек для RUB: {wallet}"
             )
             logger.info(f"Сформировано сообщение для Telegram: {message}")
 
-            # Отправка в Telegram
-            asyncio.run(telegram_app.bot.send_message(chat_id=ADMIN_CHAT_ID, text=message))
+            # Отправляем вам (админу)
+            asyncio.run(bot.send_message(chat_id=ADMIN_CHAT_ID, text=message))
+
+            # Отправляем пользователю, если он есть в списке
+            if user_chat_id and int(user_chat_id) in AUTHORIZED_USERS:
+                asyncio.run(bot.send_message(
+                    chat_id=int(user_chat_id),
+                    text="✅ Ваша заявка успешно отправлена!"
+                ))
 
             return jsonify({
                 'message': 'Заявка отправлена в Telegram!',
@@ -76,6 +85,7 @@ def index():
                 'order_amount': amount,
                 'order_wallet': wallet
             })
+
         except Exception as e:
             logger.error(f"Ошибка обработки заявки: {str(e)}")
             return jsonify({'message': f'Ошибка: {str(e)}', 'error': True})
@@ -92,9 +102,6 @@ async def telegram_webhook():
 
 
 if __name__ == '__main__':
-    # Установка webhook
-    telegram_app.run_webhook(
-        webhook_url=WEBHOOK_URL,
-        listen='0.0.0.0',
-        port=5000
-    )
+    WEBHOOK_URL = "https://crypto-exchange-5.onrender.com/telegram-webhook "
+    asyncio.run(telegram_app.bot.set_webhook(url=WEBHOOK_URL))
+    app.run(debug=False, host='0.0.0.0', port=5000)
