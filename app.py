@@ -25,9 +25,9 @@ if not telegram_token or not admin_chat_id:
     raise ValueError("TELEGRAM_TOKEN или ADMIN_CHAT_ID не заданы")
 
 # инициализация
-bot = Bot(token=telegram_token)
 app = Flask(__name__)
 CORS(app)
+bot = Bot(token=telegram_token)
 telegram_app = Application.builder().token(telegram_token).connection_pool_size(20).build()
 
 # команды бота
@@ -59,7 +59,8 @@ async def send_message_async(chat_id, text):
 
 # синхронная обёртка
 def send_message_sync(chat_id, text):
-    asyncio.run_coroutine_threadsafe(send_message_async(chat_id, text), loop).result()
+    future = asyncio.run_coroutine_threadsafe(send_message_async(chat_id, text), loop)
+    future.result()  # ждём завершения
 
 # flask роуты
 @app.route("/", methods=["GET", "POST"])
