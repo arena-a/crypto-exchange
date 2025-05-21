@@ -68,6 +68,6 @@ async def telegram_webhook():
 if __name__ == '__main__':
     nest_asyncio.apply()
     asyncio.run(telegram_app.initialize())
-    asyncio.run(bot.set_webhook("https://crypto-exchange-11.onrender.com/telegram-webhook"))
+    asyncio.run(bot.set_webhook("https://crypto-exchange-12.onrender.com/telegram-webhook"))
     telegram_app.run_task()
     app.run(host="0.0.0.0", port=5000)
