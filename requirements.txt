@@ -1,5 +1,6 @@
 Flask==3.0.3
-requests
-gunicorn
+requests==2.32.3
+gunicorn==23.0.0
 python-telegram-bot[webhooks]==21.5
-nest_asyncio
+nest_asyncio==1.6.0
+flask-cors==4.0.1
