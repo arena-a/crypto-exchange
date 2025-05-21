@@ -1,6 +1,5 @@
-flask==3.0.3
-gunicorn
+Flask==3.0.3
 requests
+gunicorn
 python-telegram-bot[webhooks]==21.5
-httpx
 nest_asyncio
