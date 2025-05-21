@@ -16,8 +16,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 # переменные окружения
-telegram_token = os.environ.get("TELEGRAM_TOKEN")
-admin_chat_id = os.environ.get("ADMIN_CHAT_ID")
+telegram_token = os.environ.get("8098295902:AAE8YxldfN-stCXWoA5HW9UUoKunkw2cj88")
+admin_chat_id = os.environ.get("789334648")
 port = int(os.environ.get("PORT", 10000))  # 10000 для render
 
 if not telegram_token or not admin_chat_id:
