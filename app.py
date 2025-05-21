@@ -11,31 +11,36 @@ logger = logging.getLogger(__name__)
 
 # Конфигурация
 app = Flask(__name__)
-TELEGRAM_TOKEN = "8098295902:AAE8YxldfN-stCXWoA5HW9UUoKunkw2cj88"  # ← Ваш токен
-ADMIN_CHAT_ID = "789334648"  # ← Ваш chat_id
+TELEGRAM_TOKEN = "8098295902:AAE8YxldfN-stCXWoA5HW9UUoKunkw2cj88"  # ← Замените на ваш токен
+ADMIN_CHAT_ID = "789334648"  # ← Ваш chat_id (куда приходит заявка)
 bot = Bot(token=TELEGRAM_TOKEN)
 
 # Хранение пользователей
-AUTHORIZED_USERS = {}
+AUTHORIZED_USERS = {}  # Здесь будут храниться chat_id тех, кто написал /start
 
 # --- Команды бота ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    AUTHORIZED_USERS[user.id] = {"username": user.username}
-    await update.message.reply_text("Привет! Заявка будет обработана.")
+    AUTHORIZED_USERS[user.id] = {
+        "username": user.username,
+        "first_name": user.first_name,
+        "last_name": user.last_name
+    }
     logger.info(f"Пользователь {user} начал взаимодействие.")
+    await update.message.reply_text("Добро пожаловать! Ваша заявка будет обработана.")
 
 async def get_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
-        data = requests.get('https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB ').json()
-        rate = data.get('RUB', 'Ошибка')
-        if rate != 'Ошибка':
+        response = requests.get('https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB ')
+        data = response.json()
+        if data.get('RUB'):
+            rate = data['RUB']
             await update.message.reply_text(f"Курс USDT/RUB: {rate:.2f}")
         else:
-            await update.message.reply_text("Не удалось получить курс.")
+            await update.message.reply_text("Ошибка получения курса.")
     except Exception as e:
-        logger.error(f"Ошибка получения курса: {e}")
-        await update.message.reply_text("Ошибка сети")
+        logger.error(f"Ошибка API: {str(e)}")
+        await update.message.reply_text("Ошибка сети.")
 
 # --- Создание Telegram-приложения ---
 telegram_app = Application.builder().token(TELEGRAM_TOKEN).build()
@@ -50,17 +55,27 @@ def index():
         wallet = request.form.get('wallet')
         user_chat_id = request.form.get('user_chat_id')
 
-        message = f"🔔 Новая заявка\nСумма USDT: {amount}\nКошелек: {wallet}"
+        if not all([amount, wallet]):
+            return jsonify({'message': 'Заполните все поля!', 'error': True})
+
+        message = (
+            f"🔔 Новая заявка\n"
+            f"Сумма USDT: {amount}\n"
+            f"Кошелек RUB: {wallet}"
+        )
+
+        # Отправляем админу
         asyncio.run(bot.send_message(chat_id=ADMIN_CHAT_ID, text=message))
 
+        # Отправляем клиенту, если он есть в списке
         if user_chat_id and int(user_chat_id) in AUTHORIZED_USERS:
             asyncio.run(bot.send_message(
                 chat_id=int(user_chat_id),
-                text="✅ Ваша заявка принята!"
+                text="✅ Ваша заявка успешно отправлена!"
             ))
 
         return jsonify({
-            'message': 'Заявка отправлена!',
+            'message': 'Заявка успешно отправлена!',
             'error': False,
             'order_amount': amount,
             'order_wallet': wallet
@@ -83,11 +98,17 @@ if __name__ == '__main__':
     nest_asyncio.apply()
 
     async def set_and_run():
-        await telegram_app.initialize()  # ✅ Обязательная инициализация
+        # Инициализация Telegram-приложения
+        await telegram_app.initialize()
+        await telegram_app.start()
 
-        WEBHOOK_URL = "https://crypto-exchange-10.onrender.com/telegram-webhook "
-        await telegram_app.bot.set_webhook(url=WEBHOOK_URL)
+        # Установка webhook
+        WEBHOOK_URL = "https://crypto-exchange-11.onrender.com/telegram-webhook "
+        await bot.set_webhook(url=WEBHOOK_URL)
 
+        # Запуск Flask
         app.run(debug=False, host='0.0.0.0', port=5000)
+
+    asyncio.run(set_and_run())
 
     asyncio.run(set_and_run())
