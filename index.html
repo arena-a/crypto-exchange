@@ -1,110 +1,15 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Криптообменник</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://min-api.cryptocompare.com  https://*.cryptocompare.com;">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        input, button {
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        .message {
-            margin-top: 10px;
-            text-align: center;
-            font-weight: bold;
-        }
-        .success {
-            color: green;
-        }
-        .error {
-            color: red;
-        }
-    </style>
+    <title>CryptoDrop</title>
 </head>
 <body>
-
-<div class="container">
-    <h3>Обмен USDT</h3>
-    <form id="orderForm" method="POST" action="/">
-        <input type="number" name="amount" placeholder="Сумма USDT" required>
-        <input type="text" name="wallet" placeholder="Кошелек RUB" required>
-        <input type="hidden" name="user_chat_id" id="user_chat_id" value="">
-        <button type="submit">Отправить заявку</button>
-        <div class="message" id="messageBox"></div>
+    <h1>Форма заявки</h1>
+    <form method="POST">
+        Сумма USDT: <input type="text" name="amount"><br>
+        Кошелек RUB: <input type="text" name="wallet"><br>
+        Ваш Telegram ID (необязательно): <input type="text" name="user_chat_id"><br>
+        <input type="submit" value="Отправить">
     </form>
-</div>
-
-<script>
-    // Попробуем получить chat_id из Telegram WebApp
-    let userChatId = '';
-
-    if (window.Telegram && window.Telegram.WebApp) {
-        const user = window.Telegram.WebApp.initDataUnsafe?.user;
-        if (user && user.id) {
-            userChatId = user.id;
-            document.getElementById('user_chat_id').value = userChatId;
-        }
-    }
-
-    // Обработка формы
-    document.getElementById('orderForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        const messageBox = document.getElementById('messageBox');
-        messageBox.style.display = 'none';
-
-        try {
-            const response = await fetch('/', {
-                method: 'POST',
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (!data.error) {
-                messageBox.className = 'message success';
-                messageBox.textContent = '✅ Заявка успешно отправлена!';
-                messageBox.style.display = 'block';
-            } else {
-                messageBox.className = 'message error';
-                messageBox.textContent = data.message;
-                messageBox.style.display = 'block';
-            }
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            messageBox.className = 'message error';
-            messageBox.textContent = '⚠️ Ошибка сети.';
-            messageBox.style.display = 'block';
-        }
-    });
-</script>
-
 </body>
 </html>
