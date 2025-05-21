@@ -2,14 +2,12 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://min-api.cryptocompare.com  https://*.cryptocompare.com; img-src 'self' data:;">
     <title>Криптообменник</title>
-    <link rel="icon" href="data:,">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f2f2f2;
+            background: #f2f2f2;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -18,19 +16,14 @@
         .container {
             background: white;
             padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            max-width: 400px;
-            width: 100%;
-            transition: transform 0.3s ease;
-            position: relative;
-            z-index: 1;
-            margin: 0 auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            width: 300px;
         }
         input, button {
             width: 100%;
             margin: 10px 0;
-            padding: 12px;
+            padding: 10px;
             border-radius: 5px;
             border: 1px solid #ccc;
         }
@@ -66,14 +59,11 @@
 </div>
 
 <script>
-    // Попробуем получить chat_id из Telegram WebApp
-    let userChatId = '';
-
+    // Получаем chat_id из Telegram WebApp
     if (window.Telegram && window.Telegram.WebApp) {
         const user = window.Telegram.WebApp.initDataUnsafe?.user;
         if (user && user.id) {
-            userChatId = user.id;
-            document.getElementById('user_chat_id').value = userChatId;
+            document.getElementById('user_chat_id').value = user.id;
         }
     }
 
