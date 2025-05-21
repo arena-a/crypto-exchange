@@ -98,7 +98,7 @@ if __name__ == '__main__':
     nest_asyncio.apply()
 
     # Установка webhook
-    WEBHOOK_URL = "https://crypto-exchange-5.onrender.com/telegram-webhook "
+    WEBHOOK_URL = "https://crypto-exchange-9.onrender.com/telegram-webhook "
     async def set_and_run():
         await telegram_app.bot.set_webhook(url=WEBHOOK_URL)
         await telegram_app.start()
