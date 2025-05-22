@@ -2,105 +2,130 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Криптообменник</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Exchange</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #f2f2f2;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #0d0d0d, #1a1a3d);
+            color: #00ffcc;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            width: 300px;
-        }
-        input, button {
+        #particles-js {
+            position: fixed;
             width: 100%;
-            margin: 10px 0;
+            height: 100%;
+            z-index: -1;
+        }
+        .form-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffcc;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .form-container:hover {
+            transform: translate(-50%, -52%) scale(1.05);
+            box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffcc;
+        }
+        input {
+            display: block;
+            margin: 10px auto;
             padding: 10px;
+            width: 200px;
+            background: #1a1a3d;
+            border: 1px solid #ff00ff;
             border-radius: 5px;
-            border: 1px solid #ccc;
+            color: #00ffcc;
+            outline: none;
+        }
+        input::placeholder {
+            color: #00ffcc;
+            opacity: 0.7;
         }
         button {
-            background-color: #4CAF50;
-            color: white;
+            padding: 10px 20px;
+            background: #ff00ff;
+            color: #0d0d0d;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
+            transition: transform 0.3s, background 0.3s;
         }
-        .message {
-            margin-top: 10px;
-            text-align: center;
-            font-weight: bold;
+        button:hover {
+            transform: scale(1.1);
+            background: #00ffcc;
         }
         .success {
-            color: green;
+            color: #00ffcc;
+            margin-top: 10px;
         }
-        .error {
-            color: red;
+        .graffiti {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 24px;
+            color: #ff00ff;
+            text-shadow: 2px 2px 5px #00ffcc, -2px -2px 5px #ff00ff;
+            margin-bottom: 20px;
         }
     </style>
 </head>
 <body>
+    <div id="particles-js"></div>
+    <div class="form-container">
+        <div class="graffiti">test</div>
+        <h2>Обмен USDT</h2>
+        <form id="exchangeForm" method="POST">
+            <input type="number" name="amount" placeholder="Сумма USDT" required>
+            <input type="text" name="crypto_address" placeholder="Адрес USDT" required>
+            <input type="text" name="wallet" placeholder="Кошелёк RUB" required>
+            <input type="text" name="user_chat_id" placeholder="Chat ID (опционально)">
+            <button type="submit">Отправить заявку</button>
+        </form>
+        <div id="message" class="success" style="display:none;"></div>
+    </div>
 
-<div class="container">
-    <h3>Обмен USDT</h3>
-    <form id="orderForm" method="POST" action="/">
-        <input type="number" name="amount" placeholder="Сумма USDT" required>
-        <input type="text" name="wallet" placeholder="Кошелек RUB" required>
-        <input type="hidden" name="user_chat_id" id="user_chat_id" value="">
-        <button type="submit">Отправить заявку</button>
-        <div class="message" id="messageBox"></div>
-    </form>
-</div>
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <script>
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 80, density: { enable: true, value_area: 800 } },
+                color: { value: "#ff00ff" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5, random: true },
+                size: { value: 3, random: true },
+                line_linked: { enable: true, distance: 150, color: "#00ffcc", opacity: 0.4, width: 1 },
+                move: { enable: true, speed: 2, direction: "none", random: true, straight: false, out_mode: "out" }
+            },
+            interactivity: {
+                detect_on: "canvas",
+                events: { onhover: { enable: true, mode: "repulse" }, onclick: { enable: true, mode: "push" } },
+                modes: { repulse: { distance: 100, duration: 0.4 }, push: { particles_nb: 4 } }
+            },
+            retina_detect: true
+        });
 
-<script>
-    // Получаем chat_id из Telegram WebApp
-    if (window.Telegram && window.Telegram.WebApp) {
-        const user = window.Telegram.WebApp.initDataUnsafe?.user;
-        if (user && user.id) {
-            document.getElementById('user_chat_id').value = user.id;
-        }
-    }
-
-    // Обработка формы
-    document.getElementById('orderForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-
-        const messageBox = document.getElementById('messageBox');
-        messageBox.style.display = 'none';
-
-        try {
+        document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
             const response = await fetch('/', {
                 method: 'POST',
                 body: formData
             });
-
-            const data = await response.json();
-
-            if (!data.error) {
-                messageBox.className = 'message success';
-                messageBox.textContent = '✅ Заявка успешно отправлена!';
-                messageBox.style.display = 'block';
+            const result = await response.json();
+            const messageDiv = document.getElementById('message');
+            if (result.error) {
+                messageDiv.textContent = result.message;
             } else {
-                messageBox.className = 'message error';
-                messageBox.textContent = data.message;
-                messageBox.style.display = 'block';
+                messageDiv.textContent = 'Заявка успешно отправлена!';
             }
-
-        } catch (error) {
-            console.error('Ошибка:', error);
-            messageBox.className = 'message error';
-            messageBox.textContent = '⚠️ Ошибка сети.';
-            messageBox.style.display = 'block';
-        }
-    });
-</script>
-
+            messageDiv.style.display = 'block';
+        });
+    </script>
 </body>
 </html>
