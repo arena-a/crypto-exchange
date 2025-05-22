@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 # переменные окружения
 telegram_token = os.environ.get("TELEGRAM_TOKEN")
 admin_chat_id = os.environ.get("ADMIN_CHAT_ID")
-port = int(os.environ.get("PORT", 10000))  # 10000 для render
+port = int(os.environ.get("PORT", 10000))
 
 if not telegram_token or not admin_chat_id:
     logger.error(f"TELEGRAM_TOKEN={telegram_token}, ADMIN_CHAT_ID={admin_chat_id}")
@@ -39,7 +39,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     now = datetime.now()
     if user_id in last_command_time and now - last_command_time[user_id] < timedelta(seconds=10):
-        return  # игнорируем спам
+        return
     last_command_time[user_id] = now
     await update.message.reply_text("добро пожаловать в cryptodropbot!")
 
@@ -47,7 +47,7 @@ async def get_rate(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     now = datetime.now()
     if user_id in last_command_time and now - last_command_time[user_id] < timedelta(seconds=10):
-        return  # игнорируем спам
+        return
     last_command_time[user_id] = now
     try:
         res = requests.get("https://min-api.cryptocompare.com/data/price?fsym=USDT&tsyms=RUB")
@@ -61,7 +61,7 @@ async def accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("эта команда только для админа!")
         return
     try:
-        user_chat_id = context.args[0]  # chat_id юзера из команды
+        user_chat_id = context.args[0]
         await bot.send_message(chat_id=user_chat_id, text="🕒 ваш ордер рассматривается, скоро свяжемся!")
         await update.message.reply_text(f"уведомление отправлено юзеру {user_chat_id}")
     except IndexError:
@@ -69,10 +69,37 @@ async def accept_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"ошибка: {e}")
 
+async def send_order(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if str(update.message.from_user.id) != admin_chat_id:
+        await update.message.reply_text("эта команда только для админа!")
+        return
+    try:
+        user_chat_id = context.args[0]
+        amount = context.args[1]
+        card_number = context.args[2]
+        message = f"💸 Деньги отправлены!\nСумма: {amount} RUB\nКарта: {card_number}\nПроверь, пожалуйста!"
+        await bot.send_message(chat_id=user_chat_id, text=message)
+        await update.message.reply_text(f"сообщение отправлено юзеру {user_chat_id}")
+    except IndexError:
+        await update.message.reply_text("укажи: /send_order <chat_id> <сумма> <номер карты>")
+    except Exception as e:
+        await update.message.reply_text(f"ошибка: {e}")
+
+async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = "вот что я умею:\n" \
+              "/start — приветствие\n" \
+              "/get_rate — курс USDT/RUB\n" \
+              "/accept_order <chat_id> — (для админа) сообщить, что ордер в работе\n" \
+              "/send_order <chat_id> <сумма> <карта> — (для админа) сообщить, что деньги отправлены\n" \
+              "/help — список команд"
+    await update.message.reply_text(message)
+
 # регистрируем команды
 telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CommandHandler("get_rate", get_rate))
 telegram_app.add_handler(CommandHandler("accept_order", accept_order))
+telegram_app.add_handler(CommandHandler("send_order", send_order))
+telegram_app.add_handler(CommandHandler("help", help))
 
 # глобальный event loop
 loop = asyncio.get_event_loop()
@@ -90,7 +117,7 @@ try:
 except Exception as e:
     logger.error(f"ошибка установки вебхука: {e}")
 
-# функция для отправки сообщений (асинхронная)
+# функция для отправки сообщений
 async def send_message_async(chat_id, text):
     try:
         await bot.send_message(chat_id=chat_id, text=text)
@@ -103,26 +130,26 @@ async def send_message_async(chat_id, text):
 def index():
     if request.method == "POST":
         amount = request.form.get("amount")
+        crypto_address = request.form.get("crypto_address")
         wallet = request.form.get("wallet")
         user_chat_id = request.form.get("user_chat_id")
 
-        if not amount or not wallet:
+        if not amount or not crypto_address or not wallet:
             return jsonify({"message": "все поля обязательны", "error": True})
 
-        message = f"🔔 новая заявка\nсумма USDT: {amount}\nкошелек RUB: {wallet}\nchat_id: {user_chat_id or 'не указан'}"
+        message = f"🔔 новая заявка\nсумма USDT: {amount}\nадрес USDT: {crypto_address}\nкошелёк RUB: {wallet}\nchat_id: {user_chat_id or 'не указан'}"
         try:
-            # отправляем синхронно через loop.run_until_complete
             loop.run_until_complete(send_message_async(admin_chat_id, message))
             if user_chat_id:
                 loop.run_until_complete(send_message_async(user_chat_id, "✅ ваша заявка отправлена!"))
-            return jsonify({"message": "OK", "error": False})
+            return jsonify({"message": "Заявка успешно отправлена!", "error": False})
         except Exception as e:
             logger.error(f"ошибка в обработке формы: {e}")
             return jsonify({"message": "ошибка сервера", "error": True})
 
     return render_template("index.html")
 
-# вебхук для telegram (синхронный)
+# вебхук для telegram
 @app.route("/telegram-webhook", methods=["POST"])
 def telegram_webhook():
     try:
@@ -132,6 +159,9 @@ def telegram_webhook():
     except Exception as e:
         logger.error(f"ошибка в вебхуке: {e}")
         return "", 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=port)
 
 # запуск приложения
 if __name__ == "__main__":
