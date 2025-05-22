@@ -49,6 +49,18 @@ telegram_app.add_handler(CommandHandler("get_rate", get_rate))
 # глобальный event loop
 loop = asyncio.get_event_loop()
 
+# инициализация приложения и установка вебхука
+logger.info("инициализация приложения")
+loop.run_until_complete(telegram_app.initialize())
+render_url = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "https://crypto-exchange-12.onrender.com")
+webhook_url = f"{render_url}/telegram-webhook"
+logger.info(f"устанавливаю вебхук: {webhook_url}")
+try:
+    loop.run_until_complete(bot.set_webhook(webhook_url))
+    logger.info("вебхук успешно установлен")
+except Exception as e:
+    logger.error(f"ошибка установки вебхука: {e}")
+
 # функция для отправки сообщений (асинхронная)
 async def send_message_async(chat_id, text):
     try:
@@ -93,17 +105,4 @@ def telegram_webhook():
 
 # запуск приложения
 if __name__ == "__main__":
-    logger.info("инициализация приложения")
-    loop.run_until_complete(telegram_app.initialize())
-    
-    # установка вебхука
-    render_url = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "https://crypto-exchange-12.onrender.com")
-    webhook_url = f"{render_url}/telegram-webhook"
-    logger.info(f"устанавливаю вебхук: {webhook_url}")
-    try:
-        loop.run_until_complete(bot.set_webhook(webhook_url))
-        logger.info("вебхук успешно установлен")
-    except Exception as e:
-        logger.error(f"ошибка установки вебхука: {e}")
-    
     app.run(host="0.0.0.0", port=port)
