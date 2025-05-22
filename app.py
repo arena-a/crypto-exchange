@@ -28,7 +28,7 @@ if not telegram_token or not admin_chat_id:
 app = Flask(__name__)
 CORS(app)
 bot = Bot(token=telegram_token)
-telegram_app = Application.builder().token(telegram_token).connection_pool_size(20).build()
+telegram_app = Application.builder().token(telegram_token).connection_pool_size(50).pool_timeout(10).build()  # увеличили пул и таймаут
 
 # команды бота
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -51,7 +51,8 @@ loop = asyncio.get_event_loop()
 
 # инициализация приложения и установка вебхука
 logger.info("инициализация приложения")
-loop.run_until_complete(telegram_app.initialize())
+loop.run_until_complete(bot.initialize())  # инициализируем Bot
+loop.run_until_complete(telegram_app.initialize())  # инициализируем Application
 render_url = os.environ.get("RENDER_EXTERNAL_HOSTNAME", "https://crypto-exchange-12.onrender.com")
 webhook_url = f"{render_url}/telegram-webhook"
 logger.info(f"устанавливаю вебхук: {webhook_url}")
