@@ -47,20 +47,14 @@ telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(CommandHandler("get_rate", get_rate))
 
 # глобальный event loop
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
+loop = asyncio.get_event_loop()
 
-# функция для отправки сообщений
+# функция для отправки сообщений (асинхронная)
 async def send_message_async(chat_id, text):
     try:
         await bot.send_message(chat_id=chat_id, text=text)
     except Exception as e:
         logger.error(f"ошибка отправки сообщения: {e}")
-
-# синхронная обёртка
-def send_message_sync(chat_id, text):
-    future = asyncio.run_coroutine_threadsafe(send_message_async(chat_id, text), loop)
-    future.result()  # ждём завершения
 
 # flask роуты
 @app.route("/", methods=["GET", "POST"])
@@ -75,9 +69,10 @@ def index():
 
         message = f"🔔 новая заявка\nсумма USDT: {amount}\nкошелек RUB: {wallet}"
         try:
-            send_message_sync(admin_chat_id, message)
+            # запускаем асинхронные задачи без ожидания
+            loop.create_task(send_message_async(admin_chat_id, message))
             if user_chat_id:
-                send_message_sync(user_chat_id, "✅ ваша заявка отправлена!")
+                loop.create_task(send_message_async(user_chat_id, "✅ ваша заявка отправлена!"))
             return jsonify({"message": "OK", "error": False})
         except Exception as e:
             logger.error(f"ошибка в обработке формы: {e}")
@@ -85,12 +80,12 @@ def index():
 
     return render_template("index.html")
 
-# вебхук для telegram
+# вебхук для telegram (синхронный)
 @app.route("/telegram-webhook", methods=["POST"])
-async def telegram_webhook():
+def telegram_webhook():
     try:
         update = Update.de_json(request.get_json(force=True), bot)
-        await telegram_app.process_update(update)
+        loop.run_until_complete(telegram_app.process_update(update))
         return "", 200
     except Exception as e:
         logger.error(f"ошибка в вебхуке: {e}")
