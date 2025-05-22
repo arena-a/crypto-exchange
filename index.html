@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,8 @@
     <style>
         body {
             margin: 0;
-            background: linear-gradient(135deg, #0d0d0d, #1a1a3d); /* тёмный гиперпанк фон */
-            color: #00ffcc; /* неоновый цвет текста */
+            background: linear-gradient(135deg, #0d0d0d, #1a1a3d);
+            color: #00ffcc;
             font-family: 'Arial', sans-serif;
             overflow: hidden;
         }
@@ -16,23 +16,23 @@
             position: fixed;
             width: 100%;
             height: 100%;
-            z-index: -1; /* частицы на фоне */
+            z-index: -1;
         }
         .form-container {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8); /* полупрозрачный чёрный */
+            background: rgba(0, 0, 0, 0.8);
             padding: 20px;
             border-radius: 10px;
-            border: 2px solid #ff00ff; /* неоновый бордер */
-            box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffcc; /* неоновое свечение */
+            border: 2px solid #ff00ff;
+            box-shadow: 0 0 20px #ff00ff, 0 0 40px #00ffcc;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .form-container:hover {
-            transform: translate(-50%, -52%) scale(1.05); /* лёгкий подъём и увеличение */
-            box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffcc; /* больше свечения */
+            transform: translate(-50%, -52%) scale(1.05);
+            box-shadow: 0 0 30px #ff00ff, 0 0 60px #00ffcc;
         }
         input {
             display: block;
@@ -67,10 +67,10 @@
             margin-top: 10px;
         }
         .graffiti {
-            font-family: 'Courier New', Courier, monospace; /* шрифт с графити-вайбом */
+            font-family: 'Courier New', Courier, monospace;
             font-size: 24px;
             color: #ff00ff;
-            text-shadow: 2px 2px 5px #00ffcc, -2px -2px 5px #ff00ff; /* неоновый эффект */
+            text-shadow: 2px 2px 5px #00ffcc, -2px -2px 5px #ff00ff;
             margin-bottom: 20px;
         }
     </style>
@@ -92,11 +92,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
     <script>
-        // частицы для фона
         particlesJS("particles-js", {
             particles: {
                 number: { value: 80, density: { enable: true, value_area: 800 } },
-                color: { value: "#ff00ff" }, /* неоновый розовый */
+                color: { value: "#ff00ff" },
                 shape: { type: "circle" },
                 opacity: { value: 0.5, random: true },
                 size: { value: 3, random: true },
@@ -111,7 +110,6 @@
             retina_detect: true
         });
 
-        // отправка формы
         document.getElementById('exchangeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
