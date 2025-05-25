@@ -30,11 +30,19 @@
             color: white;
             cursor: pointer;
         }
+        #error-text {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: red;
+            font-size: 20px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 </head>
 <body>
     <div id="game-container"></div>
+    <div id="error-text"></div>
     <div id="controls">
         <button id="leftBtn">⬅️</button>
         <button id="rightBtn">➡️</button>
@@ -62,11 +70,22 @@
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         function preload() {
-            this.load.spritesheet('player', '/player.png', { frameWidth: 32, frameHeight: 32 });
-            this.load.image('scroll1', '/scroll1.png');
-            this.load.image('scroll2', '/scroll2.png');
-            this.load.image('scroll3', '/scroll3.png');
-            this.load.image('wall', '/wall.png');
+            try {
+                this.load.spritesheet('player', '/static/player.png', { frameWidth: 32, frameHeight: 32 });
+                this.load.image('scroll1', '/static/scroll1.png');
+                this.load.image('scroll2', '/static/scroll2.png');
+                this.load.image('scroll3', '/static/scroll3.png');
+                this.load.image('wall', '/static/wall.png');
+            } catch (e) {
+                document.getElementById('error-text').innerText = 'пиздец, текстурки не грузятся: ' + e.message;
+            }
+
+            this.load.on('filecomplete', () => {
+                console.log('файл загружен');
+            });
+            this.load.on('loaderror', (file) => {
+                document.getElementById('error-text').innerText = 'пиздец, не могу загрузить: ' + file.key;
+            });
         }
 
         function create() {
@@ -139,6 +158,10 @@
             }
         }
 
+        const game = new Phaser.Game(config);
+    </script>
+</body>
+</html>
         const game = new Phaser.Game(config);
     </script>
 </body>
