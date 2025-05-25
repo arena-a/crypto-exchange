@@ -1,106 +1,84 @@
 import os
 import logging
-import asyncio
-from flask import Flask, render_template, send_from_directory, request
-from telegram import Bot, Update
-from telegram.ext import Application, CommandHandler, ContextTypes
 from datetime import datetime, timedelta
+from flask import Flask, request
+from telegram import Update
+from telegram.ext import (
+    Application,
+    CommandHandler,
+    ContextTypes,
+    ApplicationBuilder,
+)
 
-# отключаем debug-логи flask
-log = logging.getLogger('werkzeug')
-log.setLevel(logging.ERROR)
-
-# настройки логирования
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# рофл, пацан, логируем всё, чтобы не офанареть!
+logging.basicConfig(
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
+)
 logger = logging.getLogger(__name__)
 
-# переменные окружения (на Render задайте через Variables)
-telegram_token = os.getenv("TELEGRAM_TOKEN", "7756024049:AAFoN1mPyIO0BWWOnikB6nv4FL3vb-5F8wo")  # токен бота
-admin_chat_id = os.getenv("ADMIN_CHAT_ID", "789334648")  # ID админа
-port = int(os.getenv("PORT", 5000))  # порт для Render
+# рофл, тут наш Flask, чтобы не рухнул к чертям
+app = Flask(__name__, static_folder='static', template_folder='templates')
 
-# инициализация
-app = Flask(__name__, static_folder='static')
-bot = Bot(token=telegram_token)
-telegram_app = Application.builder().token(telegram_token).build()
-
-# защита от спама команд
+# храним время команд, чтобы спамеры не трынде́ли
 last_command_time = {}
 
-# команды бота
+# рофл, корневой маршрут, чтобы игра грузилась
+@app.route('/')
+def index():
+    logger.info("доступ к корневому маршруту /")
+    return app.send_static_file('elysium_game.html')  # рофл, отдаём HTML с игрой!
+
+# рофл, маршрут для вебхука, чтобы бот не молчал
+@app.route('/telegram-webhook', methods=['POST'])
+async def webhook():
+    logger.info("получен запрос на вебхук")
+    update = Update.de_json(request.get_json(force=True), bot)
+    await application.process_update(update)
+    return '', 200
+
+# рофл, команда /start, чтобы пацаны знали, что делать
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     now = datetime.now()
     if user_id in last_command_time and now - last_command_time[user_id] < timedelta(seconds=10):
-        return
+        return  # спам-фильтр, а то пиздец!
     last_command_time[user_id] = now
     await update.message.reply_text("добро пожаловать в Elysium! /play — начни игру в мрачном подвале")
+    # РОФЛ-КОММЕНТ: если бот молчит, пиздец, чекни токен и сеть!
 
+# рофл, команда /play, чтобы братаны могли рвать подвал
 async def play(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     now = datetime.now()
     if user_id in last_command_time and now - last_command_time[user_id] < timedelta(seconds=10):
-        return
+        return  # спам-фильтр, а то пиздец!
     last_command_time[user_id] = now
-    # на Render URL будет публичный, задайте его через переменные окружения или замените вручную
-    web_app_url = os.getenv("WEB_APP_URL", "https://your-render-app.onrender.com")
+    web_app_url = os.getenv("WEB_APP_URL", "https://elysium-game.onrender.com")
     await update.message.reply_text(
         "спустись в подвал Elysium! собери свитки NFT 👹",
         reply_markup={"inline_keyboard": [[{"text": "Играть", "web_app": {"url": web_app_url}}]]}
     )
+    # РОФЛ-КОММENТ: если игра не грузит, пиздец, чекни WEB_APP_URL!
 
-async def help(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "вот что я умею:\n" \
-              "/start — приветствие\n" \
-              "/play — начать игру в Elysium\n" \
-              "/help — список команд"
-    await update.message.reply_text(message)
-
-# регистрируем команды
-telegram_app.add_handler(CommandHandler("start", start))
-telegram_app.add_handler(CommandHandler("play", play))
-telegram_app.add_handler(CommandHandler("help", help))
-
-# глобальный event loop
-loop = asyncio.get_event_loop()
-
-# инициализация бота
+# рофл, инициализация бота, чтобы всё завелось
 logger.info("инициализация бота Elysium")
-loop.run_until_complete(bot.initialize())
-loop.run_until_complete(telegram_app.initialize())
+token = os.getenv("TELEGRAM_TOKEN")
+bot = ApplicationBuilder().token(token).build()
+application = bot
 
-# настройка вебхука для Render
-webhook_url = os.getenv("WEB_APP_URL", "https://your-render-app.onrender.com") + "/telegram-webhook"
-logger.info(f"устанавливаю вебхук: {webhook_url}")
-try:
-    loop.run_until_complete(bot.set_webhook(webhook_url))
-    logger.info("вебхук успешно установлен")
-except Exception as e:
-    logger.error(f"ошибка установки вебхука: {e}")
+# рофл, добавляем команды, чтобы пацаны не скучали
+bot.add_handler(CommandHandler("start", start))
+bot.add_handler(CommandHandler("play", play))
 
-# flask роуты
-@app.route("/")
-def index():
-    logger.info("доступ к корневому маршруту /")
-    return render_template("elysium_game.html")
-
-@app.route('/<path:path>')
-def static_files(path):
-    logger.info(f"доступ к статическому файлу: {path}")
-    return send_from_directory('static', path)
-
-@app.route("/telegram-webhook", methods=["POST"])
-def telegram_webhook():
-    logger.info("получен запрос на вебхук")
-    try:
-        update = Update.de_json(request.get_json(force=True), bot)
-        loop.run_until_complete(telegram_app.process_update(update))
-        return "", 200
-    except Exception as e:
-        logger.error(f"ошибка в вебхуке Elysium: {e}")
-        return "", 500
-
+# рофл, запускаем всё, чтобы Render не трынде́л
 if __name__ == "__main__":
-    # запускаем flask
-    port = int(os.getenv("PORT", 5000))  # если не задан, ставим 5000
-    app.run(host="0.0.0.0", port=port)
+    logger.info("устанавливаю вебхук: https://elysium-game.onrender.com/telegram-webhook")
+    bot.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", 10000)),  # порт от Render, сука!
+        url_path="/telegram-webhook",
+        webhook_url="https://elysium-game.onrender.com/telegram-webhook",
+    )
+    logger.info("вебхук успешно установлен")
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
