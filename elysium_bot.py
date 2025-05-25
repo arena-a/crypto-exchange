@@ -1,7 +1,7 @@
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask, request
+from flask import Flask, request, render_template
 from telegram import Update
 from telegram.ext import (
     Application,
@@ -23,12 +23,12 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 # храним время команд, чтобы спамеры не трынде́ли
 last_command_time = {}
 
-# рофл, корневой маршрут, чтобы игра грузилась
+# рофл, корневой маршрут, теперь с render_template
 @app.route('/')
 def index():
     logger.info("доступ к корневому маршруту /")
     try:
-        return app.send_static_file('elysium_game.html')  # рофл, отдаём HTML с игрой!
+        return render_template('elysium_game.html')  # рофл, рендерим HTML!
     except Exception as e:
         logger.error(f"пиздец с файлом: {e}")
         return "файл не найден, братишка, чекни templates!", 404
