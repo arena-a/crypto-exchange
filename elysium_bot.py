@@ -27,7 +27,11 @@ last_command_time = {}
 @app.route('/')
 def index():
     logger.info("доступ к корневому маршруту /")
-    return app.send_static_file('elysium_game.html')  # рофл, отдаём HTML с игрой!
+    try:
+        return app.send_static_file('elysium_game.html')  # рофл, отдаём HTML с игрой!
+    except Exception as e:
+        logger.error(f"пиздец с файлом: {e}")
+        return "файл не найден, братишка, чекни templates!", 404
 
 # рофл, маршрут для вебхука, чтобы бот не молчал
 @app.route('/telegram-webhook', methods=['POST'])
@@ -59,11 +63,14 @@ async def play(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "спустись в подвал Elysium! собери свитки NFT 👹",
         reply_markup={"inline_keyboard": [[{"text": "Играть", "web_app": {"url": web_app_url}}]]}
     )
-    # РОФЛ-КОММENТ: если игра не грузит, пиздец, чекни WEB_APP_URL!
+    # РОФЛ-КОММЕНТ: если игра не грузит, пиздец, чекни WEB_APP_URL!
 
 # рофл, инициализация бота, чтобы всё завелось
 logger.info("инициализация бота Elysium")
-token = os.getenv("TELEGRAM_TOKEN")
+token = os.getenv("TELEGRAM_TOKEN", "7756024049:AAFoN1mPyIO0BWWOnikB6nv4FL3vb-5F8wo")  # токен на всякий случай
+if not token or token == "YOUR_TELEGRAM_BOT_TOKEN":
+    logger.error("пиздец, токен не задан, братишка, возьми у BotFather!")
+    raise ValueError("токен не задан, чекни переменные окружения!")
 bot = ApplicationBuilder().token(token).build()
 application = bot
 
