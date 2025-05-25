@@ -33,7 +33,7 @@ def index():
         logger.error(f"пиздец с файлом: {e}")
         return "файл не найден, братишка, чекни templates!", 404
 
-# рофл, маршрут для вебхука, теперь асинхронный, сука!
+# рофл, маршрут для вебхука, теперь синхронный, сука!
 @app.route('/telegram-webhook', methods=['POST'])
 async def webhook():
     logger.info("получен запрос на вебхук")
