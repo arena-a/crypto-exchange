@@ -1,3 +1,4 @@
-flask==3.1.1
-python-telegram-bot==22.1
-gunicorn==23.0.0
+flask
+gunicorn
+python-telegram-bot
+python-dotenv
