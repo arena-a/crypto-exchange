@@ -33,12 +33,12 @@ def index():
         logger.error(f"пиздец с файлом: {e}")
         return "файл не найден, братишка, чекни templates!", 404
 
-# рофл, маршрут для вебхука, чтобы бот не молчал
+# рофл, маршрут для вебхука, теперь синхронный, сука!
 @app.route('/telegram-webhook', methods=['POST'])
-async def webhook():
+def webhook():
     logger.info("получен запрос на вебхук")
     update = Update.de_json(request.get_json(force=True), bot)
-    await application.process_update(update)
+    application.process_update(update)
     return '', 200
 
 # рофл, команда /start, чтобы пацаны знали, что делать
@@ -67,7 +67,7 @@ async def play(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # рофл, инициализация бота, чтобы всё завелось
 logger.info("инициализация бота Elysium")
-token = os.getenv("TELEGRAM_TOKEN", "7756024049:AAFoN1mPyIO0BWWOnikB6nv4FL3vb-5F8wo")  # токен на всякий случай
+token = os.getenv("TELEGRAM_TOKEN", "7756024049:AAFoN1mPyIO0BWWOnikB6nv4FL3vb-5F8wo")
 if not token or token == "YOUR_TELEGRAM_BOT_TOKEN":
     logger.error("пиздец, токен не задан, братишка, возьми у BotFather!")
     raise ValueError("токен не задан, чекни переменные окружения!")
