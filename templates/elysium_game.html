@@ -25,6 +25,10 @@
         button {
             font-size: 20px;
             padding: 10px;
+            background: #ff4500;
+            border: none;
+            color: white;
+            cursor: pointer;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
@@ -111,6 +115,8 @@
                 downBtn.addEventListener('touchstart', () => player.setVelocityY(160));
                 downBtn.addEventListener('touchend', () => player.setVelocityY(0));
             }
+
+            cursors = this.input.keyboard.createCursorKeys();
         }
 
         function update() {
