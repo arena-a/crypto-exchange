@@ -37,7 +37,7 @@ def index():
 @app.route('/telegram-webhook', methods=['POST'])
 async def webhook():
     logger.info("получен запрос на вебхук")
-    update = Update.de_json(request.get_json(force=True), bot)
+    update = Update.de_json(request.get_json(force=True), application.bot)
     await application.process_update(update)
     return '', 200
 
@@ -71,12 +71,11 @@ token = os.getenv("TELEGRAM_TOKEN", "7756024049:AAFoN1mPyIO0BWWOnikB6nv4FL3vb-5F
 if not token or token == "YOUR_TELEGRAM_BOT_TOKEN":
     logger.error("пиздец, токен не задан, братишка, возьми у BotFather!")
     raise ValueError("токен не задан, чекни переменные окружения!")
-bot = ApplicationBuilder().token(token).build()
-application = Application.builder().token(token).build()  # инициализация
-application.initialize()  # ручная инициализация
+application = Application.builder().token(token).build()
 
 # рофл, добавляем команды, чтобы пацаны не скучали
-application = Application.builder().token(token).build()
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("play", play))
 
 async def setup_bot():
     await application.initialize()
@@ -92,4 +91,3 @@ async def setup_bot():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(setup_bot())
-    app.run(host="0.0.0.0" port=int(os.getenv("PORT" 10000)))
