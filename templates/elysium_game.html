@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +7,8 @@
     <style>
         body {
             margin: 0;
-            background: linear-gradient(135deg, #0d0d0d, #1a1a3d); /* мрак подвала, сука! */
-            color: #ff4500; /* оранжевый, как огонь в аду */
+            background: linear-gradient(135deg, #0d0d0d, #1a1a3d);
+            color: #ff4500;
             overflow: hidden;
             font-family: 'Arial', sans-serif;
         }
@@ -16,11 +16,27 @@
             margin: 0 auto;
             text-align: center;
         }
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: none;
+        }
+        button {
+            font-size: 20px;
+            padding: 10px;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 </head>
 <body>
     <div id="game-container"></div>
+    <div id="controls">
+        <button id="leftBtn">⬅️</button>
+        <button id="rightBtn">➡️</button>
+        <button id="upBtn">⬆️</button>
+        <button id="downBtn">⬇️</button>
+    </div>
     <script>
         const config = {
             type: Phaser.AUTO,
@@ -38,57 +54,86 @@
             }
         };
 
-        let player, cursors, scrolls = [], score = 0, scoreText;
+        let player, cursors, scrolls = [], score = 0, scoreText, leftBtn, rightBtn, upBtn, downBtn;
+        let isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         function preload() {
-            this.load.image('player', '/player.png'); // лови пацанчика, не облажайся!
-            this.load.image('scroll1', '/scroll1.png'); // свиток 1, хапай!
-            this.load.image('scroll2', '/scroll2.png'); // свиток 2, забирай!
-            this.load.image('scroll3', '/scroll3.png'); // свиток 3, рви!
-            this.load.image('wall', '/wall.png'); // стены, чтобы не разъебаться
+            this.load.spritesheet('player', '/player.png', { frameWidth: 32, frameHeight: 32 }); // режем спрайтшит, рофл!
+            this.load.image('scroll1', '/scroll1.png');
+            this.load.image('scroll2', '/scroll2.png');
+            this.load.image('scroll3', '/scroll3.png');
+            this.load.image('wall', '/wall.png');
         }
 
         function create() {
-            player = this.physics.add.sprite(400, 300, 'player'); // пацанчик в центре, рофл!
-            player.setCollideWorldBounds(true); // не даём вылететь за карту
+            player = this.physics.add.sprite(400, 300, 'player');
+            player.setCollideWorldBounds(true);
 
-            cursors = this.input.keyboard.createCursorKeys(); // стрелки, жми, сука!
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 11 }), // все 12 кадров
+                frameRate: 10,
+                repeat: -1
+            });
+            player.anims.play('walk', true); // пацанчик шагает, сука!
+
+            this.cameras.main.startFollow(player); // камера рвёт за пацанчиком!
+            this.cameras.main.setBounds(0, 0, 800, 600); // границы карты, не обрывай!
 
             const walls = this.physics.add.staticGroup();
-            walls.create(400, 0, 'wall').setScale(20, 1); // верх, держи линию!
-            walls.create(400, 600, 'wall').setScale(20, 1); // низ, не провались!
-            walls.create(0, 300, 'wall').setScale(1, 10); // лево, не свались!
-            walls.create(800, 300, 'wall').setScale(1, 10); // право, стой на месте!
+            walls.create(400, 0, 'wall').setScale(20, 1);
+            walls.create(400, 600, 'wall').setScale(20, 1);
+            walls.create(0, 300, 'wall').setScale(1, 10);
+            walls.create(800, 300, 'wall').setScale(1, 10);
 
-            scrolls.push(this.physics.add.sprite(100, 200, 'scroll1')); // свиток 1, лови!
-            scrolls.push(this.physics.add.sprite(300, 200, 'scroll2')); // свиток 2, хапай!
-            scrolls.push(this.physics.add.sprite(500, 200, 'scroll3')); // свиток 3, рви!
+            scrolls.push(this.physics.add.sprite(100, 200, 'scroll1'));
+            scrolls.push(this.physics.add.sprite(300, 200, 'scroll2'));
+            scrolls.push(this.physics.add.sprite(500, 200, 'scroll3'));
 
-            scoreText = this.add.text(16, 16, 'Свитки: 0', { fontSize: '32px', fill: '#ff4500' }); // счётчик, не пизди!
+            scoreText = this.add.text(16, 16, 'Свитки: 0', { fontSize: '32px', fill: '#ff4500' });
 
-            this.physics.add.collider(player, walls); // бейся о стены, пацан!
-            this.physics.add.overlap(player, scrolls, collectScroll, null, this); // хапай свитки!
-        }
+            this.physics.add.collider(player, walls);
+            this.physics.add.overlap(player, scrolls, collectScroll, null, this);
 
-        function update() {
-            if (cursors.left.isDown) player.setVelocityX(-160); // влево, рофл!
-            else if (cursors.right.isDown) player.setVelocityX(160); // вправо, газуй!
-            else player.setVelocityX(0); // стой, сука!
-            if (cursors.up.isDown) player.setVelocityY(-160); // вверх, лети!
-            else if (cursors.down.isDown) player.setVelocityY(160); // вниз, падай!
-            else player.setVelocityY(0); // тормози, пацан!
-        }
+            if (isMobile) {
+                document.getElementById('controls').style.display = 'block';
+                leftBtn = document.getElementById('leftBtn');
+                rightBtn = document.getElementById('rightBtn');
+                upBtn = document.getElementById('upBtn');
+                downBtn = document.getElementById('downBtn');
 
-        function collectScroll(player, scroll) {
-            scroll.disableBody(true, true); // свиток собран, пиздец ему!
-            score += 1;
-            scoreText.setText('Свитки: ' + score); // обнови счёт, не облажайся!
-            if (score === 3) {
-                alert('Свитки собраны в Elysium! +50 MVX'); // рофл, алерт с наградой!
+                leftBtn.addEventListener('touchstart', () => player.setVelocityX(-160));
+                leftBtn.addEventListener('touchend', () => player.setVelocityX(0));
+                rightBtn.addEventListener('touchstart', () => player.setVelocityX(160));
+                rightBtn.addEventListener('touchend', () => player.setVelocityX(0));
+                upBtn.addEventListener('touchstart', () => player.setVelocityY(-160));
+                upBtn.addEventListener('touchend', () => player.setVelocityY(0));
+                downBtn.addEventListener('touchstart', () => player.setVelocityY(160));
+                downBtn.addEventListener('touchend', () => player.setVelocityY(0));
             }
         }
 
-        const game = new Phaser.Game(config); // запускай игру, братишка!
+        function update() {
+            if (!isMobile) {
+                if (cursors.left.isDown) player.setVelocityX(-160);
+                else if (cursors.right.isDown) player.setVelocityX(160);
+                else player.setVelocityX(0);
+                if (cursors.up.isDown) player.setVelocityY(-160);
+                else if (cursors.down.isDown) player.setVelocityY(160);
+                else player.setVelocityY(0);
+            }
+        }
+
+        function collectScroll(player, scroll) {
+            scroll.disableBody(true, true);
+            score += 1;
+            scoreText.setText('Свитки: ' + score);
+            if (score === 3) {
+                alert('Свитки собраны в Elysium! +50 MVX');
+            }
+        }
+
+        const game = new Phaser.Game(config);
     </script>
 </body>
 </html>
