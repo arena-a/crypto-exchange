@@ -77,7 +77,7 @@ application = Application.builder().token(token).build()
 application.add_handler(CommandHandler("start", start))
 application.add_handler(CommandHandler("play", play))
 
-async def setup_bot():
+async def initialize_application():
     await application.initialize()
     logger.info("устанавливаю вебхук: https://elysium-game.onrender.com/telegram-webhook")
     await application.run_webhook(
@@ -88,6 +88,11 @@ async def setup_bot():
     )
     logger.info("вебхук успешно установлен")
 
-if __name__ == "__main__":
+# рофл, запускаем инициализацию при старте приложения
+with app.app_context():
     import asyncio
-    asyncio.run(setup_bot())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(initialize_application())
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
