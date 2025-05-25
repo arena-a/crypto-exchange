@@ -76,17 +76,20 @@ application = Application.builder().token(token).build()  # инициализа
 application.initialize()  # ручная инициализация
 
 # рофл, добавляем команды, чтобы пацаны не скучали
-application.add_handler(CommandHandler("start", start))
-application.add_handler(CommandHandler("play", play))
+application = Application.builder().token(token).build()
 
-# рофл, запускаем всё, чтобы Render не трынде́л
-if __name__ == "__main__":
+async def setup_bot():
+    await application.initialize()
     logger.info("устанавливаю вебхук: https://elysium-game.onrender.com/telegram-webhook")
-    application.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.getenv("PORT", 10000)),  # порт от Render, сука!
-        url_path="/telegram-webhook",
-        webhook_url="https://elysium-game.onrender.com/telegram-webhook",
+    await application.run_webhook(
+        listen="0.0.0.0"
+        port=int(os.getenv("PORT" 10000))
+        url_path="/telegram-webhook"
+        webhook_url="https://elysium-game.onrender.com/telegram-webhook"
     )
     logger.info("вебхук успешно установлен")
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 10000)))
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(setup_bot())
+    app.run(host="0.0.0.0" port=int(os.getenv("PORT" 10000)))
