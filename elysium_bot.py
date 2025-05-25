@@ -82,9 +82,9 @@ async def setup_bot():
     await application.initialize()
     logger.info("устанавливаю вебхук: https://elysium-game.onrender.com/telegram-webhook")
     await application.run_webhook(
-        listen="0.0.0.0"
-        port=int(os.getenv("PORT" 10000))
-        url_path="/telegram-webhook"
+        listen="0.0.0.0",
+        port=int(os.getenv("PORT", 10000)),
+        url_path="/telegram-webhook",
         webhook_url="https://elysium-game.onrender.com/telegram-webhook"
     )
     logger.info("вебхук успешно установлен")
