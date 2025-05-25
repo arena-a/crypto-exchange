@@ -1,4 +1,4 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -58,7 +58,7 @@
         let isMobile = /Mobi|Android/i.test(navigator.userAgent);
 
         function preload() {
-            this.load.spritesheet('player', '/player.png', { frameWidth: 32, frameHeight: 32 }); // режем спрайтшит, рофл!
+            this.load.spritesheet('player', '/player.png', { frameWidth: 32, frameHeight: 32 });
             this.load.image('scroll1', '/scroll1.png');
             this.load.image('scroll2', '/scroll2.png');
             this.load.image('scroll3', '/scroll3.png');
@@ -71,14 +71,14 @@
 
             this.anims.create({
                 key: 'walk',
-                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 11 }), // все 12 кадров
+                frames: this.anims.generateFrameNumbers('player', { start: 0, end: 11 }),
                 frameRate: 10,
                 repeat: -1
             });
-            player.anims.play('walk', true); // пацанчик шагает, сука!
+            player.anims.play('walk', true);
 
-            this.cameras.main.startFollow(player); // камера рвёт за пацанчиком!
-            this.cameras.main.setBounds(0, 0, 800, 600); // границы карты, не обрывай!
+            this.cameras.main.startFollow(player);
+            this.cameras.main.setBounds(0, 0, 800, 600);
 
             const walls = this.physics.add.staticGroup();
             walls.create(400, 0, 'wall').setScale(20, 1);
