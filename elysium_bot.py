@@ -72,16 +72,17 @@ if not token or token == "YOUR_TELEGRAM_BOT_TOKEN":
     logger.error("пиздец, токен не задан, братишка, возьми у BotFather!")
     raise ValueError("токен не задан, чекни переменные окружения!")
 bot = ApplicationBuilder().token(token).build()
-application = bot
+application = Application.builder().token(token).build()  # инициализация
+application.initialize()  # ручная инициализация
 
 # рофл, добавляем команды, чтобы пацаны не скучали
-bot.add_handler(CommandHandler("start", start))
-bot.add_handler(CommandHandler("play", play))
+application.add_handler(CommandHandler("start", start))
+application.add_handler(CommandHandler("play", play))
 
 # рофл, запускаем всё, чтобы Render не трынде́л
 if __name__ == "__main__":
     logger.info("устанавливаю вебхук: https://elysium-game.onrender.com/telegram-webhook")
-    bot.run_webhook(
+    application.run_webhook(
         listen="0.0.0.0",
         port=int(os.getenv("PORT", 10000)),  # порт от Render, сука!
         url_path="/telegram-webhook",
